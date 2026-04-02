@@ -360,19 +360,40 @@
       throw new Error('Apps Script URL not configured');
     }
 
-    var resp = await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        row: drink.rowIndex,
-        name: drink.claimedBy[drink.claimedBy.length - 1],
-        max: drink.max
-      })
+    var payload = JSON.stringify({
+      row: drink.rowIndex,
+      name: drink.claimedBy[drink.claimedBy.length - 1],
+      max: drink.max
     });
 
-    // no-cors mode returns opaque response (status 0), so we can't check resp.ok
-    // We trust it worked if no network error was thrown
+    // Use a form submission approach to avoid CORS issues with Apps Script redirects
+    return new Promise(function (resolve, reject) {
+      var iframe = document.createElement('iframe');
+      iframe.name = 'apps-script-frame';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      form.target = 'apps-script-frame';
+
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = payload;
+      form.appendChild(input);
+
+      document.body.appendChild(form);
+      form.submit();
+
+      // Clean up after a delay and resolve
+      setTimeout(function () {
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+        resolve();
+      }, 3000);
+    });
   }
 
   function showModalError(msg) {
