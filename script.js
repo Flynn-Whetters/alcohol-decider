@@ -354,45 +354,27 @@
   }
 
   async function updateGoogleSheet(drink) {
-    // Use Apps Script web app for writes (API key can only read)
+    // Use Apps Script web app via GET request (bypasses all CORS issues)
     var url = CONFIG.APPS_SCRIPT_URL;
     if (!url || url === 'YOUR_APPS_SCRIPT_URL_HERE') {
       throw new Error('Apps Script URL not configured');
     }
 
-    var payload = JSON.stringify({
-      row: drink.rowIndex,
-      name: drink.claimedBy[drink.claimedBy.length - 1],
-      max: drink.max
-    });
+    var latestName = drink.claimedBy[drink.claimedBy.length - 1];
+    var params = '?action=claim' +
+      '&row=' + encodeURIComponent(drink.rowIndex) +
+      '&name=' + encodeURIComponent(latestName) +
+      '&max=' + encodeURIComponent(drink.max);
 
-    // Use a form submission approach to avoid CORS issues with Apps Script redirects
-    return new Promise(function (resolve, reject) {
-      var iframe = document.createElement('iframe');
-      iframe.name = 'apps-script-frame';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
+    // Fire-and-forget via image tag — no CORS, no redirects, just works
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () { resolve(); };
+      img.onerror = function () { resolve(); }; // Still resolves — the "error" is just because response isn't an image
+      img.src = url + params;
 
-      var form = document.createElement('form');
-      form.method = 'POST';
-      form.action = url;
-      form.target = 'apps-script-frame';
-
-      var input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'payload';
-      input.value = payload;
-      form.appendChild(input);
-
-      document.body.appendChild(form);
-      form.submit();
-
-      // Clean up after a delay and resolve
-      setTimeout(function () {
-        document.body.removeChild(form);
-        document.body.removeChild(iframe);
-        resolve();
-      }, 3000);
+      // Safety timeout
+      setTimeout(resolve, 5000);
     });
   }
 
