@@ -362,6 +362,7 @@
 
     var resp = await fetch(url, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         row: drink.rowIndex,
@@ -370,10 +371,8 @@
       })
     });
 
-    if (!resp.ok) {
-      var errorText = await resp.text();
-      throw new Error('Sheet update failed: ' + errorText);
-    }
+    // no-cors mode returns opaque response (status 0), so we can't check resp.ok
+    // We trust it worked if no network error was thrown
   }
 
   function showModalError(msg) {
