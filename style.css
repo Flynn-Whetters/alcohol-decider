@@ -1,0 +1,783 @@
+/* ============================================
+   🎉 WACKY PARTY DRINK REGISTRY - STYLES
+   ============================================ */
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --neon-pink: #ff2d95;
+  --neon-blue: #00d4ff;
+  --neon-green: #39ff14;
+  --neon-yellow: #fff01f;
+  --neon-orange: #ff6b35;
+  --neon-purple: #b537f2;
+  --dark-bg: #0a0a2e;
+  --card-bg: rgba(255, 255, 255, 0.08);
+  --card-border: rgba(255, 255, 255, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0d0;
+  --claimed-bg: rgba(255, 45, 149, 0.15);
+  --claimed-border: var(--neon-pink);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* --- Animated Background Blobs --- */
+.bg-blobs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: blobFloat 20s infinite ease-in-out;
+}
+
+.blob-1 {
+  width: 400px; height: 400px;
+  background: var(--neon-pink);
+  top: -100px; left: -100px;
+  animation-delay: 0s;
+}
+.blob-2 {
+  width: 350px; height: 350px;
+  background: var(--neon-blue);
+  top: 50%; right: -80px;
+  animation-delay: -5s;
+  animation-duration: 25s;
+}
+.blob-3 {
+  width: 300px; height: 300px;
+  background: var(--neon-green);
+  bottom: -50px; left: 30%;
+  animation-delay: -10s;
+  animation-duration: 22s;
+}
+.blob-4 {
+  width: 250px; height: 250px;
+  background: var(--neon-purple);
+  top: 30%; left: 60%;
+  animation-delay: -15s;
+  animation-duration: 28s;
+}
+.blob-5 {
+  width: 200px; height: 200px;
+  background: var(--neon-orange);
+  top: 70%; left: 10%;
+  animation-delay: -8s;
+  animation-duration: 18s;
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(80px, -60px) scale(1.1); }
+  50% { transform: translate(-40px, 80px) scale(0.9); }
+  75% { transform: translate(60px, 40px) scale(1.05); }
+}
+
+/* --- Confetti Canvas --- */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* --- Header --- */
+header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2.5rem 1rem 1rem;
+}
+
+header h1 {
+  font-family: 'Bangers', 'Comic Neue', cursive;
+  font-size: clamp(2rem, 6vw, 4rem);
+  letter-spacing: 3px;
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-yellow), var(--neon-green), var(--neon-blue), var(--neon-purple));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease-in-out infinite;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(255, 45, 149, 0.4));
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+/* --- Countdown --- */
+.countdown {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0 0.5rem;
+  flex-wrap: wrap;
+}
+
+.countdown-item {
+  background: var(--card-bg);
+  border: 2px solid var(--neon-blue);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  min-width: 70px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.countdown-item span {
+  display: block;
+  font-family: 'Bangers', cursive;
+  font-size: 1.8rem;
+  color: var(--neon-blue);
+}
+
+.countdown-item small {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+}
+
+.location {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  color: var(--neon-yellow);
+}
+
+/* --- Stats Bar --- */
+.stats-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem;
+  margin: 0 auto;
+  max-width: 600px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  font-family: 'Bangers', cursive;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+.stat-emoji {
+  margin-right: 0.3rem;
+}
+
+/* --- Filter Bar --- */
+.filter-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  font-family: 'Comic Neue', cursive;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+  border: 2px solid var(--card-border);
+  border-radius: 50px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 15px rgba(255, 240, 31, 0.3);
+  transform: scale(1.05);
+}
+
+.filter-btn.active {
+  background: var(--neon-purple);
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 20px rgba(181, 55, 242, 0.5);
+}
+
+/* --- Loading --- */
+.loading {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 3rem;
+}
+
+.loading-spinner {
+  font-size: 4rem;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+.loading p {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+/* --- Error Banner --- */
+.error-banner {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  margin: 0.5rem auto;
+  padding: 0.8rem 1.2rem;
+  background: rgba(255, 107, 53, 0.2);
+  border: 2px solid var(--neon-orange);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+/* --- Drink Grid --- */
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.drink-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+/* --- Drink Card --- */
+.drink-card {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.drink-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, var(--neon-pink), transparent, var(--neon-blue), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: rotateBorder 4s linear infinite;
+  z-index: -1;
+}
+
+.drink-card:hover::before {
+  opacity: 0.3;
+}
+
+@keyframes rotateBorder {
+  100% { transform: rotate(360deg); }
+}
+
+.drink-card:hover {
+  transform: translateY(-5px) rotate(var(--card-rotate, 0deg)) scale(1.03);
+  box-shadow: 0 10px 40px rgba(0, 212, 255, 0.3);
+  border-color: var(--neon-blue);
+}
+
+.drink-card.available:hover {
+  border-color: var(--neon-green);
+  box-shadow: 0 10px 40px rgba(57, 255, 20, 0.3);
+}
+
+.drink-card.claimed {
+  background: var(--claimed-bg);
+  border-color: var(--claimed-border);
+  cursor: default;
+  opacity: 0.85;
+}
+
+.drink-card.claimed:hover {
+  transform: translateY(-2px) rotate(var(--card-rotate, 0deg));
+  box-shadow: 0 5px 20px rgba(255, 45, 149, 0.2);
+  border-color: var(--claimed-border);
+}
+
+.drink-card.hidden {
+  display: none;
+}
+
+.card-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.drink-card:hover .card-emoji {
+  transform: scale(1.2) rotate(-10deg);
+}
+
+.card-drink-name {
+  font-family: 'Bangers', cursive;
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.card-status {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 50px;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.card-status.available {
+  background: rgba(57, 255, 20, 0.2);
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+}
+
+.card-status.claimed-status {
+  background: rgba(255, 45, 149, 0.2);
+  color: var(--neon-pink);
+  border: 1px solid var(--neon-pink);
+}
+
+.card-claimed-by {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  color: var(--neon-yellow);
+  font-weight: 700;
+}
+
+.card-grab-btn {
+  margin-top: 0.8rem;
+  padding: 0.5rem 1.2rem;
+  font-family: 'Comic Neue', cursive;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 2px solid var(--neon-green);
+  border-radius: 50px;
+  background: rgba(57, 255, 20, 0.15);
+  color: var(--neon-green);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.card-grab-btn:hover {
+  background: var(--neon-green);
+  color: var(--dark-bg);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+  transform: scale(1.08);
+}
+
+.card-lock-icon {
+  margin-top: 0.6rem;
+  font-size: 1.5rem;
+}
+
+/* Wacky card rotations */
+.drink-card:nth-child(3n+1) { --card-rotate: -1.5deg; }
+.drink-card:nth-child(3n+2) { --card-rotate: 1deg; }
+.drink-card:nth-child(3n)   { --card-rotate: -0.5deg; }
+.drink-card:nth-child(5n)   { --card-rotate: 2deg; }
+
+.drink-card {
+  transform: rotate(var(--card-rotate, 0deg));
+}
+
+/* Card entrance animation */
+@keyframes cardPop {
+  0% { opacity: 0; transform: scale(0.5) rotate(var(--card-rotate, 0deg)) translateY(30px); }
+  60% { transform: scale(1.05) rotate(var(--card-rotate, 0deg)) translateY(-5px); }
+  100% { opacity: 1; transform: scale(1) rotate(var(--card-rotate, 0deg)) translateY(0); }
+}
+
+.drink-card.animate-in {
+  animation: cardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+/* --- Modal --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 46, 0.85);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: linear-gradient(135deg, #1a1a4e, #2a1a3e);
+  border: 2px solid var(--neon-purple);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 60px rgba(181, 55, 242, 0.3);
+  animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.7) rotate(-5deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.8rem;
+  right: 1rem;
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--neon-pink);
+}
+
+.modal-emoji {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.modal h2 {
+  font-family: 'Bangers', cursive;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  margin-bottom: 0.3rem;
+}
+
+.modal-prompt {
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+  font-size: 1.1rem;
+}
+
+#claim-name {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-family: 'Comic Neue', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  text-align: center;
+}
+
+#claim-name:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+#claim-name::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-claim {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.8rem;
+  font-family: 'Bangers', cursive;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 45, 149, 0.4);
+}
+
+.btn-claim:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 25px rgba(255, 45, 149, 0.6);
+}
+
+.btn-claim:active {
+  transform: scale(0.97);
+}
+
+.btn-claim:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-error {
+  margin-top: 0.8rem;
+  color: var(--neon-orange);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* --- Taken Popup --- */
+.taken-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+  animation: takenPop 0.5s ease;
+}
+
+.taken-popup-content {
+  background: linear-gradient(135deg, #3a0a0a, #4a1a1a);
+  border: 3px solid var(--neon-orange);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 107, 53, 0.5);
+}
+
+.taken-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.taken-popup-content p {
+  font-family: 'Bangers', cursive;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  color: var(--neon-orange);
+}
+
+@keyframes takenPop {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* --- Spinner Modal --- */
+.spinner-modal {
+  max-width: 350px;
+}
+
+.spinner-display {
+  font-family: 'Bangers', cursive;
+  font-size: 2rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 3px dashed var(--neon-yellow);
+  border-radius: 16px;
+  background: rgba(255, 240, 31, 0.05);
+  color: var(--neon-yellow);
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 2px;
+}
+
+.spinner-display.spinning {
+  animation: spinnerFlash 0.1s infinite;
+}
+
+@keyframes spinnerFlash {
+  0% { color: var(--neon-pink); }
+  25% { color: var(--neon-green); }
+  50% { color: var(--neon-blue); }
+  75% { color: var(--neon-yellow); }
+}
+
+.btn-spin {
+  padding: 0.7rem 2rem;
+  font-family: 'Bangers', cursive;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  border: 2px solid var(--neon-yellow);
+  border-radius: 50px;
+  background: rgba(255, 240, 31, 0.15);
+  color: var(--neon-yellow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-spin:hover {
+  background: var(--neon-yellow);
+  color: var(--dark-bg);
+  box-shadow: 0 0 25px rgba(255, 240, 31, 0.5);
+  transform: scale(1.05);
+}
+
+/* --- Footer --- */
+footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem 1rem 3rem;
+}
+
+.btn-random {
+  padding: 0.8rem 2rem;
+  font-family: 'Bangers', cursive;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  border: 2px solid var(--neon-yellow);
+  border-radius: 50px;
+  background: rgba(255, 240, 31, 0.1);
+  color: var(--neon-yellow);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.btn-random:hover {
+  background: var(--neon-yellow);
+  color: var(--dark-bg);
+  box-shadow: 0 0 30px rgba(255, 240, 31, 0.4);
+  transform: scale(1.05);
+}
+
+.footer-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.admin-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-toggle:hover {
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 20px rgba(181, 55, 242, 0.5);
+  transform: scale(1.1);
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .drink-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+
+  .drink-card {
+    padding: 1rem;
+  }
+
+  .card-emoji {
+    font-size: 2.5rem;
+  }
+
+  .card-drink-name {
+    font-size: 1.1rem;
+  }
+
+  .stats-bar {
+    gap: 1rem;
+  }
+
+  .countdown {
+    gap: 0.5rem;
+  }
+
+  .countdown-item {
+    min-width: 55px;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .countdown-item span {
+    font-size: 1.4rem;
+  }
+
+  .modal {
+    padding: 1.5rem;
+    margin: 0.5rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .drink-grid {
+    grid-template-columns: 1fr;
+  }
+}

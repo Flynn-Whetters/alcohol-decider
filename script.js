@@ -1,0 +1,553 @@
+/* ============================================
+   🎉 WACKY PARTY DRINK REGISTRY - LOGIC
+   ============================================ */
+
+(function () {
+  'use strict';
+
+  // --- State ---
+  let drinks = [];          // { name, claimedBy, status, emoji }
+  let currentFilter = 'all';
+  let selectedDrinkIndex = null;
+  let isOfflineMode = false;
+
+  // --- DOM refs ---
+  const drinkGrid = document.getElementById('drink-grid');
+  const loading = document.getElementById('loading');
+  const errorBanner = document.getElementById('error-banner');
+  const claimModal = document.getElementById('claim-modal');
+  const claimForm = document.getElementById('claim-form');
+  const claimNameInput = document.getElementById('claim-name');
+  const modalDrinkName = document.getElementById('modal-drink-name');
+  const modalEmoji = document.getElementById('modal-emoji');
+  const modalError = document.getElementById('modal-error');
+  const modalClose = document.getElementById('modal-close');
+  const takenPopup = document.getElementById('taken-popup');
+  const spinnerModal = document.getElementById('spinner-modal');
+  const spinnerDisplay = document.getElementById('spinner-display');
+  const spinBtn = document.getElementById('spin-btn');
+  const spinnerClose = document.getElementById('spinner-close');
+  const randomBtn = document.getElementById('random-btn');
+  const adminToggle = document.getElementById('admin-toggle');
+  const statClaimed = document.getElementById('stat-claimed');
+  const statAvailable = document.getElementById('stat-available');
+  const statTotal = document.getElementById('stat-total');
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const partyTitle = document.getElementById('party-title');
+  const partyLocation = document.getElementById('party-location');
+
+  // --- Emoji map for drinks ---
+  const DRINK_EMOJIS = {
+    'vodka': '🍸', 'tequila': '🌵', 'beer': '🍺', 'rum': '🏴‍☠️',
+    'gin': '🫒', 'whiskey': '🥃', 'champagne': '🍾', 'cider': '🍏',
+    'premix': '🥫', 'shots': '🔥', 'non-alcoholic': '🧃', 'non alcoholic': '🧃',
+    'ice': '🧊', 'mixer': '🫧', 'lime': '🍋', 'cup': '🥤', 'straw': '🥤',
+    'snack': '🍿', 'wine': '🍷', 'cocktail': '🍹', 'seltzer': '🫧',
+    'juice': '🧃', 'water': '💧', 'soda': '🥤', 'cola': '🥤'
+  };
+  const FALLBACK_EMOJIS = ['🍹', '🥂', '🍻', '🎊', '🥳', '🍸', '🎉', '🧉'];
+
+  // --- Init ---
+  function init() {
+    partyTitle.textContent = CONFIG.PARTY_NAME;
+    partyLocation.textContent = CONFIG.PARTY_LOCATION;
+    startCountdown();
+    setupEventListeners();
+    loadDrinks();
+  }
+
+  // --- Google Sheets API ---
+  function getSheetsReadUrl() {
+    return `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(CONFIG.SPREADSHEET_ID)}/values/${encodeURIComponent(CONFIG.SHEET_NAME)}?key=${encodeURIComponent(CONFIG.API_KEY)}`;
+  }
+
+  function getSheetsUpdateUrl(range) {
+    return `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(CONFIG.SPREADSHEET_ID)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED&key=${encodeURIComponent(CONFIG.API_KEY)}`;
+  }
+
+  async function loadDrinks() {
+    loading.style.display = '';
+    drinkGrid.innerHTML = '';
+
+    if (CONFIG.API_KEY === 'YOUR_API_KEY_HERE' || CONFIG.SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') {
+      // No Sheets configured — use default drinks in offline mode
+      loadOfflineDrinks();
+      return;
+    }
+
+    try {
+      const resp = await fetch(getSheetsReadUrl());
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const rows = data.values || [];
+
+      drinks = [];
+      // Skip header row if present
+      const startIndex = (rows.length > 0 && rows[0][0] && rows[0][0].toLowerCase().includes('drink')) ? 1 : 0;
+
+      for (let i = startIndex; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row[0] || !row[0].trim()) continue;
+        drinks.push({
+          name: sanitize(row[0].trim()),
+          claimedBy: row[1] ? sanitize(row[1].trim()) : '',
+          status: row[2] ? sanitize(row[2].trim().toLowerCase()) : 'available',
+          emoji: getEmojiForDrink(row[0].trim()),
+          rowIndex: i + 1  // 1-based for Sheets API
+        });
+      }
+
+      isOfflineMode = false;
+      loading.style.display = 'none';
+      renderDrinks();
+    } catch (err) {
+      console.warn('Failed to load from Google Sheets:', err);
+      loadOfflineDrinks();
+    }
+  }
+
+  function loadOfflineDrinks() {
+    isOfflineMode = true;
+    errorBanner.style.display = '';
+
+    // Try to load from localStorage
+    const stored = localStorage.getItem('wacky-party-drinks');
+    if (stored) {
+      try {
+        drinks = JSON.parse(stored);
+        // Re-sanitize loaded data
+        drinks = drinks.map(function(d) {
+          return {
+            name: sanitize(d.name),
+            claimedBy: sanitize(d.claimedBy || ''),
+            status: sanitize(d.status || 'available'),
+            emoji: d.emoji || getEmojiForDrink(d.name)
+          };
+        });
+      } catch (e) {
+        drinks = [];
+      }
+    }
+
+    if (!drinks.length) {
+      drinks = CONFIG.DEFAULT_DRINKS.map(function (name) {
+        return {
+          name: sanitize(name),
+          claimedBy: '',
+          status: 'available',
+          emoji: getEmojiForDrink(name)
+        };
+      });
+    }
+
+    loading.style.display = 'none';
+    renderDrinks();
+  }
+
+  function saveOffline() {
+    localStorage.setItem('wacky-party-drinks', JSON.stringify(drinks));
+  }
+
+  // --- Sanitization ---
+  function sanitize(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // --- Emoji helpers ---
+  function getEmojiForDrink(name) {
+    var lower = name.toLowerCase();
+    for (var key in DRINK_EMOJIS) {
+      if (lower.indexOf(key) !== -1) return DRINK_EMOJIS[key];
+    }
+    // Check if the name already contains an emoji
+    var emojiPattern = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    if (emojiPattern.test(name)) return '';
+    return FALLBACK_EMOJIS[Math.floor(Math.random() * FALLBACK_EMOJIS.length)];
+  }
+
+  // --- Render ---
+  function renderDrinks() {
+    drinkGrid.innerHTML = '';
+    var claimedCount = 0;
+    var availableCount = 0;
+
+    drinks.forEach(function (drink, index) {
+      var isClaimed = drink.status === 'claimed' && drink.claimedBy;
+      if (isClaimed) claimedCount++; else availableCount++;
+
+      // Filter
+      var hidden = false;
+      if (currentFilter === 'available' && isClaimed) hidden = true;
+      if (currentFilter === 'claimed' && !isClaimed) hidden = true;
+
+      var card = document.createElement('div');
+      card.className = 'drink-card ' + (isClaimed ? 'claimed' : 'available') + (hidden ? ' hidden' : '') + ' animate-in';
+      card.style.animationDelay = (index * 0.05) + 's';
+
+      var html = '';
+      if (drink.emoji) {
+        html += '<span class="card-emoji">' + drink.emoji + '</span>';
+      }
+      html += '<div class="card-drink-name">' + drink.name + '</div>';
+
+      if (isClaimed) {
+        html += '<span class="card-status claimed-status">🔒 Claimed</span>';
+        html += '<div class="card-claimed-by">🙋 ' + drink.claimedBy + '</div>';
+        html += '<div class="card-lock-icon">✅</div>';
+      } else {
+        html += '<span class="card-status available">✨ Available</span>';
+        html += '<button class="card-grab-btn">🙋 I\'m Bringing This!</button>';
+      }
+
+      card.innerHTML = html;
+
+      if (!isClaimed) {
+        card.addEventListener('click', function () {
+          openClaimModal(index);
+        });
+      } else {
+        card.addEventListener('click', function () {
+          showTakenPopup();
+        });
+      }
+
+      drinkGrid.appendChild(card);
+    });
+
+    statClaimed.textContent = claimedCount;
+    statAvailable.textContent = availableCount;
+    statTotal.textContent = drinks.length;
+  }
+
+  // --- Claim Modal ---
+  function openClaimModal(index) {
+    if (drinks[index].status === 'claimed') {
+      showTakenPopup();
+      return;
+    }
+    selectedDrinkIndex = index;
+    modalDrinkName.textContent = drinks[index].name;
+    modalEmoji.textContent = drinks[index].emoji || '🍹';
+    modalError.style.display = 'none';
+    claimNameInput.value = '';
+    claimModal.style.display = '';
+    setTimeout(function () { claimNameInput.focus(); }, 100);
+  }
+
+  function closeClaimModal() {
+    claimModal.style.display = 'none';
+    selectedDrinkIndex = null;
+  }
+
+  async function handleClaim(e) {
+    e.preventDefault();
+    if (selectedDrinkIndex === null) return;
+
+    var name = claimNameInput.value.trim();
+    if (!name) {
+      showModalError('Please enter your name! 🤨');
+      return;
+    }
+    if (name.length > 50) {
+      showModalError('Name too long! Keep it under 50 chars 😅');
+      return;
+    }
+
+    var drink = drinks[selectedDrinkIndex];
+    if (drink.status === 'claimed') {
+      showModalError('Oops! Someone already grabbed this! 😱');
+      return;
+    }
+
+    // Disable button while processing
+    var btn = claimForm.querySelector('.btn-claim');
+    btn.disabled = true;
+    btn.textContent = '⏳ Claiming...';
+
+    try {
+      if (!isOfflineMode) {
+        await updateGoogleSheet(drink, name);
+      }
+
+      drink.claimedBy = sanitize(name);
+      drink.status = 'claimed';
+
+      if (isOfflineMode) {
+        saveOffline();
+      }
+
+      closeClaimModal();
+      renderDrinks();
+      fireConfetti();
+    } catch (err) {
+      console.error('Claim failed:', err);
+      showModalError('Something went wrong! Try again 😵');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🎉 I\'m Bringing It! 🎉';
+    }
+  }
+
+  async function updateGoogleSheet(drink, name) {
+    var range = CONFIG.SHEET_NAME + '!B' + drink.rowIndex + ':C' + drink.rowIndex;
+    var url = getSheetsUpdateUrl(range);
+
+    var resp = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        range: range,
+        majorDimension: 'ROWS',
+        values: [[name, 'claimed']]
+      })
+    });
+
+    if (!resp.ok) {
+      var errorText = await resp.text();
+      throw new Error('Sheet update failed: ' + errorText);
+    }
+  }
+
+  function showModalError(msg) {
+    modalError.textContent = msg;
+    modalError.style.display = '';
+  }
+
+  // --- Taken popup ---
+  function showTakenPopup() {
+    takenPopup.style.display = '';
+    setTimeout(function () {
+      takenPopup.style.display = 'none';
+    }, 1500);
+  }
+
+  // --- Filter ---
+  function setupFilters() {
+    var buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        buttons.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderDrinks();
+      });
+    });
+  }
+
+  // --- Random Spinner ---
+  function openSpinner() {
+    spinnerModal.style.display = '';
+    spinnerDisplay.textContent = '???';
+    spinnerDisplay.classList.remove('spinning');
+  }
+
+  function closeSpinner() {
+    spinnerModal.style.display = 'none';
+  }
+
+  function spin() {
+    var available = drinks.filter(function (d) { return d.status !== 'claimed'; });
+    if (!available.length) {
+      spinnerDisplay.textContent = 'All taken! 😱';
+      return;
+    }
+
+    spinnerDisplay.classList.add('spinning');
+    spinBtn.disabled = true;
+
+    var spins = 0;
+    var totalSpins = 15 + Math.floor(Math.random() * 10);
+    var interval = setInterval(function () {
+      var rand = available[Math.floor(Math.random() * available.length)];
+      spinnerDisplay.textContent = (rand.emoji || '🍹') + ' ' + rand.name;
+      spins++;
+
+      if (spins >= totalSpins) {
+        clearInterval(interval);
+        spinnerDisplay.classList.remove('spinning');
+        spinBtn.disabled = false;
+        // Final pick
+        var pick = available[Math.floor(Math.random() * available.length)];
+        spinnerDisplay.textContent = (pick.emoji || '🍹') + ' ' + pick.name + ' 🎉';
+        fireConfetti();
+      }
+    }, 80 + spins * 5);
+  }
+
+  // --- Countdown Timer ---
+  function startCountdown() {
+    function update() {
+      var target = new Date(CONFIG.PARTY_DATE).getTime();
+      var now = Date.now();
+      var diff = target - now;
+
+      if (diff <= 0) {
+        document.getElementById('cd-days').textContent = '🎉';
+        document.getElementById('cd-hours').textContent = 'IT\'S';
+        document.getElementById('cd-mins').textContent = 'PARTY';
+        document.getElementById('cd-secs').textContent = 'TIME';
+        return;
+      }
+
+      var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      var h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      var m = Math.floor((diff / (1000 * 60)) % 60);
+      var s = Math.floor((diff / 1000) % 60);
+
+      document.getElementById('cd-days').textContent = String(d).padStart(2, '0');
+      document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+      document.getElementById('cd-mins').textContent = String(m).padStart(2, '0');
+      document.getElementById('cd-secs').textContent = String(s).padStart(2, '0');
+    }
+
+    update();
+    setInterval(update, 1000);
+  }
+
+  // --- Confetti 🎊 ---
+  function fireConfetti() {
+    var ctx = confettiCanvas.getContext('2d');
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    var particles = [];
+    var colors = ['#ff2d95', '#00d4ff', '#39ff14', '#fff01f', '#ff6b35', '#b537f2'];
+
+    for (var i = 0; i < 150; i++) {
+      particles.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -10 - Math.random() * confettiCanvas.height * 0.3,
+        w: 6 + Math.random() * 6,
+        h: 4 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 6,
+        vy: 2 + Math.random() * 4,
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 10,
+        opacity: 1
+      });
+    }
+
+    var frame = 0;
+    function animate() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      var alive = false;
+
+      particles.forEach(function (p) {
+        if (p.opacity <= 0) return;
+        alive = true;
+
+        p.x += p.vx;
+        p.vy += 0.1;
+        p.y += p.vy;
+        p.rotation += p.rotationSpeed;
+
+        if (frame > 60) {
+          p.opacity -= 0.015;
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+
+      frame++;
+      if (alive && frame < 200) {
+        requestAnimationFrame(animate);
+      } else {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      }
+    }
+
+    animate();
+  }
+
+  // --- Admin toggle (filter to show admin view) ---
+  var adminActive = false;
+  function toggleAdmin() {
+    adminActive = !adminActive;
+    if (adminActive) {
+      adminToggle.textContent = '🔙';
+      // Show a simple summary
+      var claimed = drinks.filter(function (d) { return d.status === 'claimed'; });
+      var unclaimed = drinks.filter(function (d) { return d.status !== 'claimed'; });
+
+      var html = '<div style="max-width:600px;margin:0 auto;text-align:left;">';
+      html += '<h2 style="font-family:Bangers,cursive;letter-spacing:2px;text-align:center;margin-bottom:1rem;">📋 Admin Summary</h2>';
+
+      html += '<h3 style="color:var(--neon-green);margin-bottom:0.5rem;">✅ Claimed (' + claimed.length + ')</h3>';
+      if (claimed.length) {
+        html += '<ul style="list-style:none;margin-bottom:1.5rem;">';
+        claimed.forEach(function (d) {
+          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> — 🙋 ' + d.claimedBy + '</li>';
+        });
+        html += '</ul>';
+      } else {
+        html += '<p style="color:var(--text-secondary);margin-bottom:1.5rem;">None yet!</p>';
+      }
+
+      html += '<h3 style="color:var(--neon-orange);margin-bottom:0.5rem;">🆓 Unclaimed (' + unclaimed.length + ')</h3>';
+      if (unclaimed.length) {
+        html += '<ul style="list-style:none;margin-bottom:1rem;">';
+        unclaimed.forEach(function (d) {
+          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+            (d.emoji || '🍹') + ' ' + d.name + '</li>';
+        });
+        html += '</ul>';
+      } else {
+        html += '<p style="color:var(--text-secondary);">Everything is claimed! 🎉</p>';
+      }
+
+      html += '</div>';
+
+      drinkGrid.innerHTML = html;
+    } else {
+      adminToggle.textContent = '👀';
+      renderDrinks();
+    }
+  }
+
+  // --- Event Listeners ---
+  function setupEventListeners() {
+    claimForm.addEventListener('submit', handleClaim);
+    modalClose.addEventListener('click', closeClaimModal);
+    claimModal.addEventListener('click', function (e) {
+      if (e.target === claimModal) closeClaimModal();
+    });
+
+    randomBtn.addEventListener('click', openSpinner);
+    spinBtn.addEventListener('click', spin);
+    spinnerClose.addEventListener('click', closeSpinner);
+    spinnerModal.addEventListener('click', function (e) {
+      if (e.target === spinnerModal) closeSpinner();
+    });
+
+    adminToggle.addEventListener('click', toggleAdmin);
+
+    setupFilters();
+
+    // Close modals on Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeClaimModal();
+        closeSpinner();
+      }
+    });
+
+    // Handle window resize for confetti canvas
+    window.addEventListener('resize', function () {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    });
+  }
+
+  // --- Start! ---
+  document.addEventListener('DOMContentLoaded', init);
+})();
