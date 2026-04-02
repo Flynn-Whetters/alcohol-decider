@@ -13,7 +13,7 @@ const CONFIG = {
   SPREADSHEET_ID: '1XJj0q0n5Uo_mzRKDto9pZaxrlPCB6yZR7fNiwdb_7Mw',
 
   // The sheet/tab name (default is Sheet1)
-  SHEET_NAME: 'Sheet1',
+  SHEET_NAME: 'PleaseBringAlchol',
 
   // Party details (customize these!)
   PARTY_NAME: '🎉 Wacky Party Drink Registry 🎉',
