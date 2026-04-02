@@ -354,18 +354,19 @@
   }
 
   async function updateGoogleSheet(drink) {
-    var namesStr = drink.claimedBy.join(', ');
-    var status = isFull(drink) ? 'full' : 'open';
-    var range = CONFIG.SHEET_NAME + '!B' + drink.rowIndex + ':C' + drink.rowIndex;
-    var url = getSheetsUpdateUrl(range);
+    // Use Apps Script web app for writes (API key can only read)
+    var url = CONFIG.APPS_SCRIPT_URL;
+    if (!url || url === 'YOUR_APPS_SCRIPT_URL_HERE') {
+      throw new Error('Apps Script URL not configured');
+    }
 
     var resp = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
-        range: range,
-        majorDimension: 'ROWS',
-        values: [[namesStr, status]]
+        row: drink.rowIndex,
+        name: drink.claimedBy[drink.claimedBy.length - 1],
+        max: drink.max
       })
     });
 

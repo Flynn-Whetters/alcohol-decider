@@ -15,6 +15,10 @@ const CONFIG = {
   // The sheet/tab name (default is Sheet1)
   SHEET_NAME: 'PleaseBringAlchol',
 
+  // Google Apps Script Web App URL (handles writes — paste your deployed URL here)
+  // See README for setup instructions
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxutRl8H7rGO-M_WLd08mn9T6hZb6bJU4SrvmiK_TRfuMRsUU622VU1P2dKyH3_uHGE/exec',
+
   // Party details (customize these!)
   PARTY_NAME: '🎉 Wacky Party Drink Registry 🎉',
   PARTY_DATE: '2026-05-09T18:00:00', // YYYY-MM-DDTHH:MM:SS format
