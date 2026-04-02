@@ -39,24 +39,24 @@
   <!-- Stats bar -->
   <div class="stats-bar">
     <div class="stat">
-      <span class="stat-emoji">✅</span>
-      <span id="stat-claimed">0</span> Claimed
+      <span class="stat-emoji">🙋</span>
+      <span id="stat-claimed">0</span> Sign-ups
     </div>
     <div class="stat">
       <span class="stat-emoji">🆓</span>
-      <span id="stat-available">0</span> Available
+      <span id="stat-available">0</span> Need More
     </div>
     <div class="stat">
       <span class="stat-emoji">🍹</span>
-      <span id="stat-total">0</span> Total
+      <span id="stat-total">0</span> Drinks
     </div>
   </div>
 
   <!-- Filter buttons -->
   <div class="filter-bar">
     <button class="filter-btn active" data-filter="all">🎪 All</button>
-    <button class="filter-btn" data-filter="available">🆓 Available</button>
-    <button class="filter-btn" data-filter="claimed">🔒 Claimed</button>
+    <button class="filter-btn" data-filter="available">🆓 Need People</button>
+    <button class="filter-btn" data-filter="claimed">🔒 Full</button>
   </div>
 
   <!-- Loading state -->
@@ -81,6 +81,7 @@
       <button class="modal-close" id="modal-close">&times;</button>
       <div class="modal-emoji" id="modal-emoji">🍸</div>
       <h2 id="modal-drink-name">Drink Name</h2>
+      <p id="modal-slots" class="modal-slots"></p>
       <p class="modal-prompt">Who's bringing this? 🤔</p>
       <form id="claim-form">
         <input
@@ -103,7 +104,7 @@
   <div id="taken-popup" class="taken-popup" style="display:none;">
     <div class="taken-popup-content">
       <span class="taken-emoji">🚫</span>
-      <p>Already taken — pick another!</p>
+      <p>All spots taken — pick another drink!</p>
     </div>
   </div>
 

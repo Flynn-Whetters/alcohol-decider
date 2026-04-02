@@ -6,7 +6,7 @@
   'use strict';
 
   // --- State ---
-  let drinks = [];          // { name, claimedBy, status, emoji }
+  let drinks = [];          // { name, claimedBy: [], max, emoji }
   let currentFilter = 'all';
   let selectedDrinkIndex = null;
   let isOfflineMode = false;
@@ -88,10 +88,13 @@
       for (let i = startIndex; i < rows.length; i++) {
         const row = rows[i];
         if (!row[0] || !row[0].trim()) continue;
+        // Column B = comma-separated names, C = status, D = max (optional)
+        var names = row[1] ? row[1].split(',').map(function(n) { return sanitize(n.trim()); }).filter(Boolean) : [];
+        var max = (row[3] && parseInt(row[3], 10)) || CONFIG.DEFAULT_MAX_PER_DRINK;
         drinks.push({
           name: sanitize(row[0].trim()),
-          claimedBy: row[1] ? sanitize(row[1].trim()) : '',
-          status: row[2] ? sanitize(row[2].trim().toLowerCase()) : 'available',
+          claimedBy: names,
+          max: max,
           emoji: getEmojiForDrink(row[0].trim()),
           rowIndex: i + 1  // 1-based for Sheets API
         });
@@ -115,12 +118,20 @@
     if (stored) {
       try {
         drinks = JSON.parse(stored);
-        // Re-sanitize loaded data
+        // Re-sanitize loaded data & migrate old format
         drinks = drinks.map(function(d) {
+          var names = d.claimedBy;
+          if (typeof names === 'string') {
+            names = names ? [sanitize(names)] : [];
+          } else if (Array.isArray(names)) {
+            names = names.map(function(n) { return sanitize(n); });
+          } else {
+            names = [];
+          }
           return {
             name: sanitize(d.name),
-            claimedBy: sanitize(d.claimedBy || ''),
-            status: sanitize(d.status || 'available'),
+            claimedBy: names,
+            max: d.max || CONFIG.DEFAULT_MAX_PER_DRINK,
             emoji: d.emoji || getEmojiForDrink(d.name)
           };
         });
@@ -130,11 +141,13 @@
     }
 
     if (!drinks.length) {
-      drinks = CONFIG.DEFAULT_DRINKS.map(function (name) {
+      drinks = CONFIG.DEFAULT_DRINKS.map(function (item) {
+        var name = typeof item === 'string' ? item : item.name;
+        var max = typeof item === 'object' && item.max ? item.max : CONFIG.DEFAULT_MAX_PER_DRINK;
         return {
           name: sanitize(name),
-          claimedBy: '',
-          status: 'available',
+          claimedBy: [],
+          max: max,
           emoji: getEmojiForDrink(name)
         };
       });
@@ -167,23 +180,43 @@
     return FALLBACK_EMOJIS[Math.floor(Math.random() * FALLBACK_EMOJIS.length)];
   }
 
+  // --- Helpers ---
+  function isFull(drink) {
+    return drink.claimedBy.length >= drink.max;
+  }
+
+  function slotsLeft(drink) {
+    return Math.max(0, drink.max - drink.claimedBy.length);
+  }
+
   // --- Render ---
   function renderDrinks() {
     drinkGrid.innerHTML = '';
-    var claimedCount = 0;
+    var fullCount = 0;
     var availableCount = 0;
+    var totalSlotsClaimed = 0;
 
     drinks.forEach(function (drink, index) {
-      var isClaimed = drink.status === 'claimed' && drink.claimedBy;
-      if (isClaimed) claimedCount++; else availableCount++;
+      var full = isFull(drink);
+      if (full) fullCount++; else availableCount++;
+      totalSlotsClaimed += drink.claimedBy.length;
 
       // Filter
       var hidden = false;
-      if (currentFilter === 'available' && isClaimed) hidden = true;
-      if (currentFilter === 'claimed' && !isClaimed) hidden = true;
+      if (currentFilter === 'available' && full) hidden = true;
+      if (currentFilter === 'claimed' && !full) hidden = true;
 
       var card = document.createElement('div');
-      card.className = 'drink-card ' + (isClaimed ? 'claimed' : 'available') + (hidden ? ' hidden' : '') + ' animate-in';
+      var cardClass = 'drink-card ';
+      if (full) {
+        cardClass += 'claimed';
+      } else if (drink.claimedBy.length > 0) {
+        cardClass += 'partial';
+      } else {
+        cardClass += 'available';
+      }
+      cardClass += (hidden ? ' hidden' : '') + ' animate-in';
+      card.className = cardClass;
       card.style.animationDelay = (index * 0.05) + 's';
 
       var html = '';
@@ -192,18 +225,34 @@
       }
       html += '<div class="card-drink-name">' + drink.name + '</div>';
 
-      if (isClaimed) {
-        html += '<span class="card-status claimed-status">🔒 Claimed</span>';
-        html += '<div class="card-claimed-by">🙋 ' + drink.claimedBy + '</div>';
+      // Capacity indicator
+      html += '<div class="card-capacity">';
+      for (var s = 0; s < drink.max; s++) {
+        html += '<span class="slot ' + (s < drink.claimedBy.length ? 'slot-filled' : 'slot-empty') + '"></span>';
+      }
+      html += '</div>';
+      html += '<div class="card-slots-text">' + drink.claimedBy.length + '/' + drink.max + ' spots taken</div>';
+
+      // Names list
+      if (drink.claimedBy.length > 0) {
+        html += '<div class="card-names-list">';
+        drink.claimedBy.forEach(function (name) {
+          html += '<span class="card-name-tag">🙋 ' + name + '</span>';
+        });
+        html += '</div>';
+      }
+
+      if (full) {
+        html += '<span class="card-status claimed-status">🔒 Full</span>';
         html += '<div class="card-lock-icon">✅</div>';
       } else {
-        html += '<span class="card-status available">✨ Available</span>';
+        html += '<span class="card-status available">✨ ' + slotsLeft(drink) + ' spot' + (slotsLeft(drink) !== 1 ? 's' : '') + ' left</span>';
         html += '<button class="card-grab-btn">🙋 I\'m Bringing This!</button>';
       }
 
       card.innerHTML = html;
 
-      if (!isClaimed) {
+      if (!full) {
         card.addEventListener('click', function () {
           openClaimModal(index);
         });
@@ -216,20 +265,24 @@
       drinkGrid.appendChild(card);
     });
 
-    statClaimed.textContent = claimedCount;
+    statClaimed.textContent = totalSlotsClaimed;
     statAvailable.textContent = availableCount;
     statTotal.textContent = drinks.length;
   }
 
   // --- Claim Modal ---
   function openClaimModal(index) {
-    if (drinks[index].status === 'claimed') {
+    if (isFull(drinks[index])) {
       showTakenPopup();
       return;
     }
     selectedDrinkIndex = index;
-    modalDrinkName.textContent = drinks[index].name;
-    modalEmoji.textContent = drinks[index].emoji || '🍹';
+    var drink = drinks[index];
+    modalDrinkName.textContent = drink.name;
+    modalEmoji.textContent = drink.emoji || '🍹';
+    // Show slots info in modal
+    var slotsInfo = document.getElementById('modal-slots');
+    if (slotsInfo) slotsInfo.textContent = slotsLeft(drink) + ' of ' + drink.max + ' spots remaining';
     modalError.style.display = 'none';
     claimNameInput.value = '';
     claimModal.style.display = '';
@@ -256,8 +309,18 @@
     }
 
     var drink = drinks[selectedDrinkIndex];
-    if (drink.status === 'claimed') {
-      showModalError('Oops! Someone already grabbed this! 😱');
+    if (isFull(drink)) {
+      showModalError('Oops! All spots are taken now! Pick another drink 😱');
+      return;
+    }
+
+    // Check if this person already signed up for this drink
+    var sanitizedName = sanitize(name);
+    var alreadySignedUp = drink.claimedBy.some(function(n) {
+      return n.toLowerCase() === sanitizedName.toLowerCase();
+    });
+    if (alreadySignedUp) {
+      showModalError('You\'re already bringing this one! 😄');
       return;
     }
 
@@ -267,12 +330,11 @@
     btn.textContent = '⏳ Claiming...';
 
     try {
-      if (!isOfflineMode) {
-        await updateGoogleSheet(drink, name);
-      }
+      drink.claimedBy.push(sanitizedName);
 
-      drink.claimedBy = sanitize(name);
-      drink.status = 'claimed';
+      if (!isOfflineMode) {
+        await updateGoogleSheet(drink);
+      }
 
       if (isOfflineMode) {
         saveOffline();
@@ -282,6 +344,8 @@
       renderDrinks();
       fireConfetti();
     } catch (err) {
+      // Roll back on failure
+      drink.claimedBy.pop();
       console.error('Claim failed:', err);
       showModalError('Something went wrong! Try again 😵');
     } finally {
@@ -290,7 +354,9 @@
     }
   }
 
-  async function updateGoogleSheet(drink, name) {
+  async function updateGoogleSheet(drink) {
+    var namesStr = drink.claimedBy.join(', ');
+    var status = isFull(drink) ? 'full' : 'open';
     var range = CONFIG.SHEET_NAME + '!B' + drink.rowIndex + ':C' + drink.rowIndex;
     var url = getSheetsUpdateUrl(range);
 
@@ -300,7 +366,7 @@
       body: JSON.stringify({
         range: range,
         majorDimension: 'ROWS',
-        values: [[name, 'claimed']]
+        values: [[namesStr, status]]
       })
     });
 
@@ -348,7 +414,7 @@
   }
 
   function spin() {
-    var available = drinks.filter(function (d) { return d.status !== 'claimed'; });
+    var available = drinks.filter(function (d) { return !isFull(d); });
     if (!available.length) {
       spinnerDisplay.textContent = 'All taken! 😱';
       return;
@@ -475,34 +541,49 @@
     if (adminActive) {
       adminToggle.textContent = '🔙';
       // Show a simple summary
-      var claimed = drinks.filter(function (d) { return d.status === 'claimed'; });
-      var unclaimed = drinks.filter(function (d) { return d.status !== 'claimed'; });
+      var full = drinks.filter(function (d) { return isFull(d); });
+      var partial = drinks.filter(function (d) { return d.claimedBy.length > 0 && !isFull(d); });
+      var empty = drinks.filter(function (d) { return d.claimedBy.length === 0; });
+      var totalPeople = drinks.reduce(function (sum, d) { return sum + d.claimedBy.length; }, 0);
 
       var html = '<div style="max-width:600px;margin:0 auto;text-align:left;">';
       html += '<h2 style="font-family:Bangers,cursive;letter-spacing:2px;text-align:center;margin-bottom:1rem;">📋 Admin Summary</h2>';
+      html += '<p style="text-align:center;margin-bottom:1rem;color:var(--neon-yellow);">' + totalPeople + ' total sign-ups across ' + drinks.length + ' drinks</p>';
 
-      html += '<h3 style="color:var(--neon-green);margin-bottom:0.5rem;">✅ Claimed (' + claimed.length + ')</h3>';
-      if (claimed.length) {
+      html += '<h3 style="color:var(--neon-pink);margin-bottom:0.5rem;">🔒 Full (' + full.length + ')</h3>';
+      if (full.length) {
         html += '<ul style="list-style:none;margin-bottom:1.5rem;">';
-        claimed.forEach(function (d) {
+        full.forEach(function (d) {
           html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
-            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> — 🙋 ' + d.claimedBy + '</li>';
+            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> (' + d.claimedBy.length + '/' + d.max + ') — 🙋 ' + d.claimedBy.join(', ') + '</li>';
         });
         html += '</ul>';
       } else {
         html += '<p style="color:var(--text-secondary);margin-bottom:1.5rem;">None yet!</p>';
       }
 
-      html += '<h3 style="color:var(--neon-orange);margin-bottom:0.5rem;">🆓 Unclaimed (' + unclaimed.length + ')</h3>';
-      if (unclaimed.length) {
-        html += '<ul style="list-style:none;margin-bottom:1rem;">';
-        unclaimed.forEach(function (d) {
+      html += '<h3 style="color:var(--neon-blue);margin-bottom:0.5rem;">🔵 Partially Claimed (' + partial.length + ')</h3>';
+      if (partial.length) {
+        html += '<ul style="list-style:none;margin-bottom:1.5rem;">';
+        partial.forEach(function (d) {
           html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
-            (d.emoji || '🍹') + ' ' + d.name + '</li>';
+            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> (' + d.claimedBy.length + '/' + d.max + ') — 🙋 ' + d.claimedBy.join(', ') + '</li>';
         });
         html += '</ul>';
       } else {
-        html += '<p style="color:var(--text-secondary);">Everything is claimed! 🎉</p>';
+        html += '<p style="color:var(--text-secondary);margin-bottom:1.5rem;">None!</p>';
+      }
+
+      html += '<h3 style="color:var(--neon-green);margin-bottom:0.5rem;">🆓 Unclaimed (' + empty.length + ')</h3>';
+      if (empty.length) {
+        html += '<ul style="list-style:none;margin-bottom:1rem;">';
+        empty.forEach(function (d) {
+          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
+            (d.emoji || '🍹') + ' ' + d.name + ' (0/' + d.max + ')</li>';
+        });
+        html += '</ul>';
+      } else {
+        html += '<p style="color:var(--text-secondary);">Everything has at least one person! 🎉</p>';
       }
 
       html += '</div>';

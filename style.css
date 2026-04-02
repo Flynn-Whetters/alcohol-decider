@@ -433,6 +433,77 @@ main {
   font-size: 1.5rem;
 }
 
+/* Capacity dots */
+.card-capacity {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 0.4rem 0;
+}
+
+.slot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--card-border);
+  transition: all 0.3s ease;
+}
+
+.slot-filled {
+  background: var(--neon-pink);
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 6px rgba(255, 45, 149, 0.5);
+}
+
+.slot-empty {
+  background: transparent;
+  border-color: var(--neon-green);
+}
+
+.card-slots-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+/* Name tags */
+.card-names-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin: 0.4rem 0;
+}
+
+.card-name-tag {
+  font-size: 0.78rem;
+  background: rgba(255, 240, 31, 0.12);
+  border: 1px solid rgba(255, 240, 31, 0.3);
+  color: var(--neon-yellow);
+  padding: 0.15rem 0.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+}
+
+/* Partial state (some claimed, not full) */
+.drink-card.partial {
+  border-color: var(--neon-blue);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.drink-card.partial:hover {
+  border-color: var(--neon-green);
+  box-shadow: 0 10px 40px rgba(57, 255, 20, 0.3);
+}
+
+/* Modal slots info */
+.modal-slots {
+  font-size: 0.95rem;
+  color: var(--neon-blue);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
 /* Wacky card rotations */
 .drink-card:nth-child(3n+1) { --card-rotate: -1.5deg; }
 .drink-card:nth-child(3n+2) { --card-rotate: 1deg; }
