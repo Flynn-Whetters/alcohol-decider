@@ -28,7 +28,6 @@
   const spinBtn = document.getElementById('spin-btn');
   const spinnerClose = document.getElementById('spinner-close');
   const randomBtn = document.getElementById('random-btn');
-  const adminToggle = document.getElementById('admin-toggle');
   const statClaimed = document.getElementById('stat-claimed');
   const statAvailable = document.getElementById('stat-available');
   const statTotal = document.getElementById('stat-total');
@@ -534,67 +533,6 @@
     animate();
   }
 
-  // --- Admin toggle (filter to show admin view) ---
-  var adminActive = false;
-  function toggleAdmin() {
-    adminActive = !adminActive;
-    if (adminActive) {
-      adminToggle.textContent = '🔙';
-      // Show a simple summary
-      var full = drinks.filter(function (d) { return isFull(d); });
-      var partial = drinks.filter(function (d) { return d.claimedBy.length > 0 && !isFull(d); });
-      var empty = drinks.filter(function (d) { return d.claimedBy.length === 0; });
-      var totalPeople = drinks.reduce(function (sum, d) { return sum + d.claimedBy.length; }, 0);
-
-      var html = '<div style="max-width:600px;margin:0 auto;text-align:left;">';
-      html += '<h2 style="font-family:Bangers,cursive;letter-spacing:2px;text-align:center;margin-bottom:1rem;">📋 Admin Summary</h2>';
-      html += '<p style="text-align:center;margin-bottom:1rem;color:var(--neon-yellow);">' + totalPeople + ' total sign-ups across ' + drinks.length + ' drinks</p>';
-
-      html += '<h3 style="color:var(--neon-pink);margin-bottom:0.5rem;">🔒 Full (' + full.length + ')</h3>';
-      if (full.length) {
-        html += '<ul style="list-style:none;margin-bottom:1.5rem;">';
-        full.forEach(function (d) {
-          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
-            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> (' + d.claimedBy.length + '/' + d.max + ') — 🙋 ' + d.claimedBy.join(', ') + '</li>';
-        });
-        html += '</ul>';
-      } else {
-        html += '<p style="color:var(--text-secondary);margin-bottom:1.5rem;">None yet!</p>';
-      }
-
-      html += '<h3 style="color:var(--neon-blue);margin-bottom:0.5rem;">🔵 Partially Claimed (' + partial.length + ')</h3>';
-      if (partial.length) {
-        html += '<ul style="list-style:none;margin-bottom:1.5rem;">';
-        partial.forEach(function (d) {
-          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
-            (d.emoji || '🍹') + ' <strong>' + d.name + '</strong> (' + d.claimedBy.length + '/' + d.max + ') — 🙋 ' + d.claimedBy.join(', ') + '</li>';
-        });
-        html += '</ul>';
-      } else {
-        html += '<p style="color:var(--text-secondary);margin-bottom:1.5rem;">None!</p>';
-      }
-
-      html += '<h3 style="color:var(--neon-green);margin-bottom:0.5rem;">🆓 Unclaimed (' + empty.length + ')</h3>';
-      if (empty.length) {
-        html += '<ul style="list-style:none;margin-bottom:1rem;">';
-        empty.forEach(function (d) {
-          html += '<li style="padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.1);">' +
-            (d.emoji || '🍹') + ' ' + d.name + ' (0/' + d.max + ')</li>';
-        });
-        html += '</ul>';
-      } else {
-        html += '<p style="color:var(--text-secondary);">Everything has at least one person! 🎉</p>';
-      }
-
-      html += '</div>';
-
-      drinkGrid.innerHTML = html;
-    } else {
-      adminToggle.textContent = '👀';
-      renderDrinks();
-    }
-  }
-
   // --- Event Listeners ---
   function setupEventListeners() {
     claimForm.addEventListener('submit', handleClaim);
@@ -609,8 +547,6 @@
     spinnerModal.addEventListener('click', function (e) {
       if (e.target === spinnerModal) closeSpinner();
     });
-
-    adminToggle.addEventListener('click', toggleAdmin);
 
     setupFilters();
 

@@ -797,6 +797,8 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
+  color: var(--text-primary);
 }
 
 .admin-toggle:hover {

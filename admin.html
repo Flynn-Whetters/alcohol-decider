@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔒 Admin - Party Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --neon-pink: #ff2d95;
+      --neon-blue: #00d4ff;
+      --neon-green: #39ff14;
+      --neon-yellow: #fff01f;
+      --neon-orange: #ff6b35;
+      --neon-purple: #b537f2;
+      --dark-bg: #0a0a2e;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --text-primary: #ffffff;
+      --text-secondary: #b0b0d0;
+    }
+
+    body {
+      font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    /* --- Password Gate --- */
+    #password-gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+    }
+
+    #password-gate h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 2.5rem;
+      letter-spacing: 3px;
+      color: var(--neon-purple);
+      margin-bottom: 1rem;
+    }
+
+    #password-gate input {
+      padding: 0.8rem 1.2rem;
+      font-family: 'Comic Neue', cursive;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-primary);
+      outline: none;
+      text-align: center;
+      width: 280px;
+      margin-bottom: 1rem;
+    }
+
+    #password-gate input:focus {
+      border-color: var(--neon-purple);
+      box-shadow: 0 0 20px rgba(181, 55, 242, 0.3);
+    }
+
+    #password-gate button {
+      padding: 0.7rem 2rem;
+      font-family: 'Bangers', cursive;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    #password-gate button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(255, 45, 149, 0.5);
+    }
+
+    .pw-error {
+      color: var(--neon-orange);
+      margin-top: 0.5rem;
+      font-weight: 700;
+      display: none;
+    }
+
+    /* --- Dashboard --- */
+    #dashboard { display: none; }
+
+    header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+    }
+
+    header h1 {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      letter-spacing: 3px;
+      color: var(--neon-purple);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: var(--neon-blue);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .back-link:hover { text-decoration: underline; }
+
+    /* --- Summary Cards --- */
+    .summary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.2rem 1.8rem;
+      text-align: center;
+      min-width: 140px;
+      backdrop-filter: blur(10px);
+    }
+
+    .summary-card .big-num {
+      font-family: 'Bangers', cursive;
+      font-size: 2.5rem;
+      display: block;
+    }
+
+    .summary-card .label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    /* --- Sections --- */
+    .section {
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .section h2 {
+      font-family: 'Bangers', cursive;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    /* --- Guest Table --- */
+    .guest-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .guest-table th {
+      text-align: left;
+      font-family: 'Bangers', cursive;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      padding: 0.5rem;
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    .guest-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      vertical-align: middle;
+    }
+
+    .guest-table tr:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .badge-bringing {
+      background: rgba(57, 255, 20, 0.2);
+      color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+    }
+
+    .badge-nothing {
+      background: rgba(255, 107, 53, 0.2);
+      color: var(--neon-orange);
+      border: 1px solid var(--neon-orange);
+    }
+
+    .badge-confirmed {
+      background: rgba(0, 212, 255, 0.2);
+      color: var(--neon-blue);
+      border: 1px solid var(--neon-blue);
+    }
+
+    .badge-maybe {
+      background: rgba(255, 240, 31, 0.2);
+      color: var(--neon-yellow);
+      border: 1px solid var(--neon-yellow);
+    }
+
+    /* --- Drink Summary Table --- */
+    .drink-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .drink-table th {
+      text-align: left;
+      font-family: 'Bangers', cursive;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      padding: 0.5rem;
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    .drink-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .drink-table tr:hover {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-fill.full { background: var(--neon-pink); }
+    .progress-fill.partial { background: var(--neon-blue); }
+    .progress-fill.empty { background: var(--card-border); width: 0; }
+
+    .name-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .name-pill {
+      font-size: 0.75rem;
+      background: rgba(255, 240, 31, 0.12);
+      border: 1px solid rgba(255, 240, 31, 0.3);
+      color: var(--neon-yellow);
+      padding: 0.1rem 0.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+    }
+
+    /* --- No Contribution Warning --- */
+    .warning-list {
+      list-style: none;
+    }
+
+    .warning-list li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.95rem;
+    }
+
+    .warning-list li::before {
+      content: '⚠️ ';
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 600px) {
+      .guest-table, .drink-table { font-size: 0.85rem; }
+      .guest-table th, .guest-table td,
+      .drink-table th, .drink-table td { padding: 0.35rem 0.25rem; }
+      .section { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Password Gate -->
+  <div id="password-gate">
+    <h1>🔒 Admin Dashboard</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Enter the admin password to continue</p>
+    <input type="password" id="pw-input" placeholder="Password..." autofocus />
+    <button id="pw-btn">Let Me In 🎉</button>
+    <p class="pw-error" id="pw-error">Wrong password! 🚫</p>
+  </div>
+
+  <!-- Dashboard (hidden until password entered) -->
+  <div id="dashboard">
+    <header>
+      <h1>📋 Party Admin Dashboard</h1>
+      <a href="index.html" class="back-link">← Back to Party Page</a>
+    </header>
+
+    <!-- Summary row -->
+    <div class="summary-row">
+      <div class="summary-card">
+        <span class="big-num" style="color: var(--neon-blue);" id="sum-invited">0</span>
+        <span class="label">Invited</span>
+      </div>
+      <div class="summary-card">
+        <span class="big-num" style="color: var(--neon-green);" id="sum-bringing">0</span>
+        <span class="label">Bringing Drinks</span>
+      </div>
+      <div class="summary-card">
+        <span class="big-num" style="color: var(--neon-orange);" id="sum-silent">0</span>
+        <span class="label">No Drink Yet</span>
+      </div>
+      <div class="summary-card">
+        <span class="big-num" style="color: var(--neon-yellow);" id="sum-maybe">0</span>
+        <span class="label">Maybe +1s</span>
+      </div>
+      <div class="summary-card">
+        <span class="big-num" style="color: var(--neon-purple);" id="sum-headcount">0</span>
+        <span class="label">Max Headcount</span>
+      </div>
+    </div>
+
+    <!-- Guest List Section -->
+    <div class="section">
+      <h2 style="color: var(--neon-blue);">👥 Guest List</h2>
+      <table class="guest-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>+1</th>
+            <th>Bringing?</th>
+          </tr>
+        </thead>
+        <tbody id="guest-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Drink Breakdown Section -->
+    <div class="section">
+      <h2 style="color: var(--neon-green);">🍹 Drink Breakdown</h2>
+      <div id="drink-loading" style="text-align:center; padding:1rem; color: var(--text-secondary);">Loading drinks...</div>
+      <table class="drink-table" style="display:none;" id="drink-table">
+        <thead>
+          <tr>
+            <th>Drink</th>
+            <th>Who</th>
+            <th>Slots</th>
+          </tr>
+        </thead>
+        <tbody id="drink-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Not Contributing Warning -->
+    <div class="section">
+      <h2 style="color: var(--neon-orange);">⚠️ Haven't Signed Up Yet</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 0.8rem; font-size: 0.9rem;">
+        These invited guests haven't claimed any drinks yet
+      </p>
+      <ul class="warning-list" id="silent-list"></ul>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // --- Password Gate ---
+    var pwInput = document.getElementById('pw-input');
+    var pwBtn = document.getElementById('pw-btn');
+    var pwError = document.getElementById('pw-error');
+    var gate = document.getElementById('password-gate');
+    var dashboard = document.getElementById('dashboard');
+
+    // Check if already authenticated this session
+    if (sessionStorage.getItem('admin-auth') === 'yes') {
+      gate.style.display = 'none';
+      dashboard.style.display = '';
+      loadDashboard();
+    }
+
+    pwBtn.addEventListener('click', tryLogin);
+    pwInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') tryLogin();
+    });
+
+    function tryLogin() {
+      if (pwInput.value === CONFIG.ADMIN_PASSWORD) {
+        sessionStorage.setItem('admin-auth', 'yes');
+        gate.style.display = 'none';
+        dashboard.style.display = '';
+        loadDashboard();
+      } else {
+        pwError.style.display = '';
+        pwInput.value = '';
+        pwInput.focus();
+      }
+    }
+
+    // --- Dashboard ---
+    function loadDashboard() {
+      renderGuestList();
+      loadDrinks();
+    }
+
+    // --- Guest List ---
+    function renderGuestList() {
+      var tbody = document.getElementById('guest-tbody');
+      var guests = CONFIG.GUESTS || [];
+      tbody.innerHTML = '';
+
+      guests.forEach(function (g, i) {
+        var tr = document.createElement('tr');
+        var plus1Html = '';
+        if (g.plus1) {
+          if (g.plus1maybe) {
+            plus1Html = sanitize(g.plus1) + ' <span class="badge badge-maybe">maybe</span>';
+          } else {
+            plus1Html = sanitize(g.plus1) + ' <span class="badge badge-confirmed">confirmed</span>';
+          }
+        } else {
+          plus1Html = '<span style="color: var(--text-secondary);">—</span>';
+        }
+
+        tr.innerHTML =
+          '<td>' + (i + 1) + '</td>' +
+          '<td><strong>' + sanitize(g.name) + '</strong></td>' +
+          '<td>' + plus1Html + '</td>' +
+          '<td id="guest-status-' + i + '"><span style="color: var(--text-secondary);">loading...</span></td>';
+        tbody.appendChild(tr);
+      });
+
+      // Update summary
+      var maybeCount = guests.filter(function (g) { return g.plus1maybe; }).length;
+      var confirmedPlus1 = guests.filter(function (g) { return g.plus1 && !g.plus1maybe; }).length;
+      var soloCount = guests.length;
+      document.getElementById('sum-invited').textContent = soloCount;
+      document.getElementById('sum-maybe').textContent = maybeCount;
+      document.getElementById('sum-headcount').textContent = soloCount + confirmedPlus1 + maybeCount;
+    }
+
+    // --- Load Drinks (same logic as main site) ---
+    function getSheetsReadUrl() {
+      return 'https://sheets.googleapis.com/v4/spreadsheets/' +
+        encodeURIComponent(CONFIG.SPREADSHEET_ID) + '/values/' +
+        encodeURIComponent(CONFIG.SHEET_NAME) + '?key=' +
+        encodeURIComponent(CONFIG.API_KEY);
+    }
+
+    function sanitize(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    async function loadDrinks() {
+      var drinks = [];
+      var isOffline = false;
+
+      if (CONFIG.API_KEY === 'YOUR_API_KEY_HERE' || CONFIG.SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') {
+        isOffline = true;
+      }
+
+      if (!isOffline) {
+        try {
+          var resp = await fetch(getSheetsReadUrl());
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          var data = await resp.json();
+          var rows = data.values || [];
+
+          var startIndex = (rows.length > 0 && rows[0][0] && rows[0][0].toLowerCase().indexOf('drink') !== -1) ? 1 : 0;
+          for (var i = startIndex; i < rows.length; i++) {
+            var row = rows[i];
+            if (!row[0] || !row[0].trim()) continue;
+            var names = row[1] ? row[1].split(',').map(function (n) { return n.trim(); }).filter(Boolean) : [];
+            var max = (row[3] && parseInt(row[3], 10)) || CONFIG.DEFAULT_MAX_PER_DRINK;
+            drinks.push({ name: row[0].trim(), claimedBy: names, max: max });
+          }
+        } catch (e) {
+          console.warn('Sheets failed, trying offline:', e);
+          isOffline = true;
+        }
+      }
+
+      if (isOffline) {
+        // Try localStorage
+        var stored = localStorage.getItem('wacky-party-drinks');
+        if (stored) {
+          try {
+            drinks = JSON.parse(stored).map(function (d) {
+              var names = d.claimedBy;
+              if (typeof names === 'string') names = names ? [names] : [];
+              if (!Array.isArray(names)) names = [];
+              return { name: d.name, claimedBy: names, max: d.max || CONFIG.DEFAULT_MAX_PER_DRINK };
+            });
+          } catch (e) { drinks = []; }
+        }
+
+        if (!drinks.length) {
+          drinks = CONFIG.DEFAULT_DRINKS.map(function (item) {
+            var name = typeof item === 'string' ? item : item.name;
+            var max = typeof item === 'object' && item.max ? item.max : CONFIG.DEFAULT_MAX_PER_DRINK;
+            return { name: name, claimedBy: [], max: max };
+          });
+        }
+      }
+
+      renderDrinkTable(drinks);
+      crossReferenceGuests(drinks);
+    }
+
+    // --- Render Drink Table ---
+    function renderDrinkTable(drinks) {
+      var drinkLoading = document.getElementById('drink-loading');
+      var drinkTable = document.getElementById('drink-table');
+      var tbody = document.getElementById('drink-tbody');
+
+      drinkLoading.style.display = 'none';
+      drinkTable.style.display = '';
+      tbody.innerHTML = '';
+
+      drinks.forEach(function (d) {
+        var tr = document.createElement('tr');
+        var pct = d.max > 0 ? Math.round((d.claimedBy.length / d.max) * 100) : 0;
+        var full = d.claimedBy.length >= d.max;
+
+        var pillsHtml = '';
+        if (d.claimedBy.length > 0) {
+          pillsHtml = '<div class="name-pills">';
+          d.claimedBy.forEach(function (n) {
+            pillsHtml += '<span class="name-pill">' + sanitize(n) + '</span>';
+          });
+          pillsHtml += '</div>';
+        } else {
+          pillsHtml = '<span style="color: var(--text-secondary); font-size:0.85rem;">No one yet</span>';
+        }
+
+        var barClass = full ? 'full' : (d.claimedBy.length > 0 ? 'partial' : 'empty');
+
+        tr.innerHTML =
+          '<td><strong>' + sanitize(d.name) + '</strong></td>' +
+          '<td>' + pillsHtml + '</td>' +
+          '<td style="min-width:100px;">' +
+            '<div style="font-size:0.8rem;margin-bottom:2px;">' + d.claimedBy.length + '/' + d.max + '</div>' +
+            '<div class="progress-bar"><div class="progress-fill ' + barClass + '" style="width:' + pct + '%"></div></div>' +
+          '</td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- Cross-Reference: which guests have signed up ---
+    function crossReferenceGuests(drinks) {
+      var guests = CONFIG.GUESTS || [];
+      // Build a set of all claimant names (lowercased for matching)
+      var allClaimants = [];
+      drinks.forEach(function (d) {
+        d.claimedBy.forEach(function (n) {
+          allClaimants.push(n.toLowerCase());
+        });
+      });
+
+      var bringingCount = 0;
+      var silentGuests = [];
+
+      guests.forEach(function (g, i) {
+        var cell = document.getElementById('guest-status-' + i);
+        if (!cell) return;
+
+        // Find what this guest is bringing
+        var bringing = [];
+        drinks.forEach(function (d) {
+          d.claimedBy.forEach(function (n) {
+            if (n.toLowerCase() === g.name.toLowerCase()) {
+              bringing.push(d.name);
+            }
+          });
+        });
+
+        if (bringing.length > 0) {
+          bringingCount++;
+          cell.innerHTML = '<span class="badge badge-bringing">✅ ' + bringing.map(sanitize).join(', ') + '</span>';
+        } else {
+          silentGuests.push(g.name);
+          cell.innerHTML = '<span class="badge badge-nothing">❌ Nothing yet</span>';
+        }
+      });
+
+      document.getElementById('sum-bringing').textContent = bringingCount;
+      document.getElementById('sum-silent').textContent = silentGuests.length;
+
+      // Render silent list
+      var silentList = document.getElementById('silent-list');
+      silentList.innerHTML = '';
+      if (silentGuests.length === 0) {
+        silentList.innerHTML = '<li style="color: var(--neon-green);">Everyone has signed up! 🎉</li>';
+        silentList.querySelector('li').style.listStyle = 'none';
+      } else {
+        silentGuests.forEach(function (name) {
+          var li = document.createElement('li');
+          li.textContent = name;
+          silentList.appendChild(li);
+        });
+      }
+    }
+  })();
+  </script>
+</body>
+</html>
