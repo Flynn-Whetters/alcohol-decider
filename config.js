@@ -41,6 +41,8 @@ const CONFIG = {
     'Kahlúa ☕',
     'Peach Schnapps 🍑',
     'Crème de Mûre 🫐',
+    { name: 'Malibu 🥥 (2 L)', max: 2 },
+    { name: 'Blue Curaçao 💙 (2 L)', max: 2 },
     // Mixers & Juices
     { name: 'Mango Nectar 🥭 (4 L)', max: 2 },
     { name: 'Pineapple Juice 🍍 (5 L)', max: 2 },

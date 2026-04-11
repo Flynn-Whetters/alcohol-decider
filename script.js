@@ -49,6 +49,7 @@
     'mango': '🥭', 'pineapple': '🍍', 'orange juice': '🍊',
     'cranberry': '🫐', 'ginger beer': '🍺', 'coke': '🥤',
     'sugar syrup': '🍯', 'espresso': '☕',
+    'malibu': '🥥', 'blue curacao': '💙', 'curaçao': '💙',
     'juice': '🧃'
   };
   const FALLBACK_EMOJIS = ['🍹', '🥂', '🍻', '🎊', '🥳', '🍸', '🎉', '🧉'];
