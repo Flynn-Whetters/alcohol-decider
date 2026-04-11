@@ -26,7 +26,9 @@
   <!-- Header -->
   <header>
     <h1 id="party-title">🎉 Wacky Party Drink Registry 🎉</h1>
-    <p class="subtitle">Claim your drink before someone else does! 🏃‍♂️💨</p>
+    <p class="subtitle">We're mixing up cocktails at this event and we need your help! Below is a list of everything we need — claim what you can bring. 🍹</p>
+    <p class="subtitle">We are just trying to get an idea of who can bring what so we can plan accordingly. so feel free to bring more drinks and mixers if you have half empty bottles please feel free to bring them, we just want to make sure we cover the alchol we need for the cocktails.</p>
+    <p class="subtitle">Snacks are also a huge help — if you can bring chips, lollies, or anything to munch on, we'd love you for it! 🍿🍬</p>
     <div id="countdown" class="countdown">
       <div class="countdown-item"><span id="cd-days">00</span><small>DAYS</small></div>
       <div class="countdown-item"><span id="cd-hours">00</span><small>HRS</small></div>
@@ -92,6 +94,15 @@
           autocomplete="off"
           required
         />
+        <input
+          type="text"
+          id="claim-quantity"
+          placeholder="How much? e.g. 1L, 500ml, 2 bottles"
+          maxlength="30"
+          autocomplete="off"
+          required
+        />
+        <p id="quantity-hint" class="quantity-hint">Enter amount in L, ml, or bottles (e.g. 1.5L, 750ml, 2 bottles)</p>
         <button type="submit" class="btn-claim">
           🎉 I'm Bringing It! 🎉
         </button>

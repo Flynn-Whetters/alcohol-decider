@@ -619,6 +619,37 @@ main {
   color: rgba(255, 255, 255, 0.3);
 }
 
+#claim-quantity {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-top: 0.6rem;
+  font-family: 'Comic Neue', cursive;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  text-align: center;
+}
+
+#claim-quantity:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+#claim-quantity::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.quantity-hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .btn-claim {
   margin-top: 1rem;
   width: 100%;

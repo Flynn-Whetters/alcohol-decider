@@ -18,6 +18,7 @@
   const claimModal = document.getElementById('claim-modal');
   const claimForm = document.getElementById('claim-form');
   const claimNameInput = document.getElementById('claim-name');
+  const claimQuantityInput = document.getElementById('claim-quantity');
   const modalDrinkName = document.getElementById('modal-drink-name');
   const modalEmoji = document.getElementById('modal-emoji');
   const modalError = document.getElementById('modal-error');
@@ -93,12 +94,14 @@
       for (let i = startIndex; i < rows.length; i++) {
         const row = rows[i];
         if (!row[0] || !row[0].trim()) continue;
-        // Column B = comma-separated names, C = status, D = max (optional)
+        // Column B = comma-separated names, C = status, D = max (optional), E = comma-separated quantities
         var names = row[1] ? row[1].split(',').map(function(n) { return sanitize(n.trim()); }).filter(Boolean) : [];
+        var quantities = row[4] ? row[4].split(',').map(function(q) { return q.trim(); }).filter(Boolean) : [];
         var max = (row[3] && parseInt(row[3], 10)) || CONFIG.DEFAULT_MAX_PER_DRINK;
         drinks.push({
           name: sanitize(row[0].trim()),
           claimedBy: names,
+          quantities: quantities,
           max: max,
           emoji: getEmojiForDrink(row[0].trim()),
           rowIndex: i + 1  // 1-based for Sheets API
@@ -136,6 +139,7 @@
           return {
             name: sanitize(d.name),
             claimedBy: names,
+            quantities: d.quantities || [],
             max: d.max || CONFIG.DEFAULT_MAX_PER_DRINK,
             emoji: d.emoji || getEmojiForDrink(d.name)
           };
@@ -152,6 +156,7 @@
         return {
           name: sanitize(name),
           claimedBy: [],
+          quantities: [],
           max: max,
           emoji: getEmojiForDrink(name)
         };
@@ -243,8 +248,9 @@
       // Names list
       if (drink.claimedBy.length > 0) {
         html += '<div class="card-names-list">';
-        drink.claimedBy.forEach(function (name) {
-          html += '<span class="card-name-tag">🙋 ' + name + '</span>';
+        drink.claimedBy.forEach(function (name, idx) {
+          var qty = drink.quantities && drink.quantities[idx] ? ' (' + drink.quantities[idx] + ')' : '';
+          html += '<span class="card-name-tag">🙋 ' + name + qty + '</span>';
         });
         html += '</div>';
       }
@@ -292,6 +298,7 @@
     if (slotsInfo) slotsInfo.textContent = slotsLeft(drink) + ' of ' + drink.max + ' spots remaining';
     modalError.style.display = 'none';
     claimNameInput.value = '';
+    claimQuantityInput.value = '';
     claimModal.style.display = '';
     setTimeout(function () { claimNameInput.focus(); }, 100);
   }
@@ -312,6 +319,18 @@
     }
     if (name.length > 50) {
       showModalError('Name too long! Keep it under 50 chars 😅');
+      return;
+    }
+
+    var quantity = claimQuantityInput.value.trim();
+    if (!quantity) {
+      showModalError('Please enter how much you\'re bringing! 📏');
+      return;
+    }
+    // Validate quantity: must be a number followed by L, ml, or bottles
+    var qtyPattern = /^\d+(\.\d+)?\s*(L|l|ml|ML|Ml|bottles?|BOTTLES?)$/;
+    if (!qtyPattern.test(quantity)) {
+      showModalError('Enter a valid amount, e.g. 1L, 500ml, or 2 bottles 📏');
       return;
     }
 
@@ -338,9 +357,11 @@
 
     try {
       drink.claimedBy.push(sanitizedName);
+      if (!drink.quantities) drink.quantities = [];
+      drink.quantities.push(quantity);
 
       if (!isOfflineMode) {
-        await updateGoogleSheet(drink);
+        await updateGoogleSheet(drink, quantity);
       }
 
       if (isOfflineMode) {
@@ -353,6 +374,7 @@
     } catch (err) {
       // Roll back on failure
       drink.claimedBy.pop();
+      if (drink.quantities) drink.quantities.pop();
       console.error('Claim failed:', err);
       showModalError('Something went wrong! Try again 😵');
     } finally {
@@ -361,7 +383,7 @@
     }
   }
 
-  async function updateGoogleSheet(drink) {
+  async function updateGoogleSheet(drink, quantity) {
     // Use Apps Script web app via GET request (bypasses all CORS issues)
     var url = CONFIG.APPS_SCRIPT_URL;
     if (!url || url === 'YOUR_APPS_SCRIPT_URL_HERE') {
@@ -372,7 +394,8 @@
     var params = '?action=claim' +
       '&row=' + encodeURIComponent(drink.rowIndex) +
       '&name=' + encodeURIComponent(latestName) +
-      '&max=' + encodeURIComponent(drink.max);
+      '&max=' + encodeURIComponent(drink.max) +
+      '&quantity=' + encodeURIComponent(quantity || '');
 
     // Fire-and-forget via image tag — no CORS, no redirects, just works
     return new Promise(function (resolve) {
