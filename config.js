@@ -32,20 +32,27 @@ const CONFIG = {
   // Default drinks list — used if Google Sheets is unavailable
   // Use a string for the default max, or { name, max } to override per drink.
   DEFAULT_DRINKS: [
-    'Vodka 🍸',
+    // Spirits
+    { name: 'Vodka 🍸', max: 4 },
+    { name: 'Rum 🏴‍☠️', max: 4 },
+    { name: 'Gin 🫒', max: 3 },
     'Tequila 🌵',
-    { name: 'Beer 🍺', max: 5 },
-    'Rum 🏴‍☠️',
-    'Gin 🫒',
-    'Whiskey 🥃',
-    'Champagne 🍾',
-    'Cider 🍏',
-    { name: 'Premix Cans 🥫', max: 5 },
-    'Shots 🔥',
-    { name: 'Non-Alcoholic Drinks 🧃', max: 4 },
+    'Triple Sec 🍊',
+    'Kahlúa ☕',
+    'Peach Schnapps 🍑',
+    'Crème de Mûre 🫐',
+    // Mixers & Juices
+    { name: 'Mango Nectar 🥭 (4 L)', max: 2 },
+    { name: 'Pineapple Juice 🍍 (5 L)', max: 2 },
+    { name: 'Orange Juice 🍊 (4 L)', max: 2 },
+    { name: 'Cranberry Juice 🫐 (4 L)', max: 2 },
+    { name: 'Lime Juice 🍋‍🟩 (3 L / ~30 limes)', max: 2 },
+    { name: 'Coke 🥤 (6 L)', max: 2 },
+    { name: 'Ginger Beer 🍺 (4 L)', max: 2 },
+    'Sugar Syrup 🍯 (1 L)',
+    'Espresso ☕ (1 large batch)',
+    // Extras
     { name: 'Ice 🧊', max: 4 },
-    { name: 'Mixers 🫧', max: 4 },
-    'Limes 🍋‍🟩',
     'Cups & Straws 🥤',
     'Snacks 🍿'
   ],
