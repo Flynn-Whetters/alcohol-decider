@@ -40,9 +40,15 @@
     'vodka': '🍸', 'tequila': '🌵', 'beer': '🍺', 'rum': '🏴‍☠️',
     'gin': '🫒', 'whiskey': '🥃', 'champagne': '🍾', 'cider': '🍏',
     'premix': '🥫', 'shots': '🔥', 'non-alcoholic': '🧃', 'non alcoholic': '🧃',
-    'ice': '🧊', 'mixer': '🫧', 'lime': '🍋', 'cup': '🥤', 'straw': '🥤',
+    'mixer': '🫧', 'lime': '🍋', 'cup': '🥤', 'straw': '🥤',
     'snack': '🍿', 'wine': '🍷', 'cocktail': '🍹', 'seltzer': '🫧',
-    'juice': '🧃', 'water': '💧', 'soda': '🥤', 'cola': '🥤'
+    'water': '💧', 'soda': '🥤', 'cola': '🥤',
+    'triple sec': '🍊', 'kahlúa': '☕', 'kahlua': '☕', 'peach schnapps': '🍑',
+    'crème de mûre': '🫐', 'creme de mure': '🫐',
+    'mango': '🥭', 'pineapple': '🍍', 'orange juice': '🍊',
+    'cranberry': '🫐', 'ginger beer': '🍺', 'coke': '🥤',
+    'sugar syrup': '🍯', 'espresso': '☕',
+    'juice': '🧃'
   };
   const FALLBACK_EMOJIS = ['🍹', '🥂', '🍻', '🎊', '🥳', '🍸', '🎉', '🧉'];
 
@@ -170,6 +176,8 @@
   // --- Emoji helpers ---
   function getEmojiForDrink(name) {
     var lower = name.toLowerCase();
+    // Check for "ice" as a standalone word (not inside "juice")
+    if (/\bice\b/.test(lower) && lower.indexOf('juice') === -1) return '🧊';
     for (var key in DRINK_EMOJIS) {
       if (lower.indexOf(key) !== -1) return DRINK_EMOJIS[key];
     }
