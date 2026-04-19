@@ -412,7 +412,7 @@
     // Check if already authenticated this session
     if (sessionStorage.getItem('admin-auth') === 'yes') {
       gate.style.display = 'none';
-      dashboard.style.display = '';
+      dashboard.style.display = 'block';
       loadDashboard();
     }
 
@@ -425,7 +425,7 @@
       if (pwInput.value === CONFIG.ADMIN_PASSWORD) {
         sessionStorage.setItem('admin-auth', 'yes');
         gate.style.display = 'none';
-        dashboard.style.display = '';
+        dashboard.style.display = 'block';
         loadDashboard();
       } else {
         pwError.style.display = '';
